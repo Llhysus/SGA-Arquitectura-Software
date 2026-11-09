@@ -1,0 +1,29 @@
+digraph ER {
+  rankdir=TB; fontname="DejaVu Sans"; nodesep=0.3; ranksep=0.8; splines=true;
+  node [shape=plain, fontname="DejaVu Sans", fontsize=9];
+  edge [fontname="DejaVu Sans", fontsize=9, dir=none, color="#444444", labeldistance=1.8];
+  Usuario [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#D6E4F5"><b>Usuario</b></td></tr><tr><td align="left">id (PK) · correo (único)<br align="left"/>password_hash · activo<br align="left"/></td></tr></table>>];
+  Rol [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#D6E4F5"><b>Rol</b></td></tr><tr><td align="left">id (PK) · nombre<br align="left"/></td></tr></table>>];
+  Estudiante [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#DDEFD5"><b>Estudiante</b></td></tr><tr><td align="left">id (PK) · usuario_id (FK)<br align="left"/>programa_id (FK) · código<br align="left"/>nombres · apellidos · activo<br align="left"/></td></tr></table>>];
+  Docente [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#DDEFD5"><b>Docente</b></td></tr><tr><td align="left">id (PK) · usuario_id (FK)<br align="left"/>código · nombres · apellidos<br align="left"/>activo<br align="left"/></td></tr></table>>];
+  Programa [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#DDEFD5"><b>Programa</b></td></tr><tr><td align="left">id (PK) · código · nombre<br align="left"/>activo<br align="left"/></td></tr></table>>];
+  Asignatura [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#DDEFD5"><b>Asignatura</b></td></tr><tr><td align="left">id (PK) · programa_id (FK)<br align="left"/>código · nombre · créditos<br align="left"/>semestre_o_nivel<br align="left"/></td></tr></table>>];
+  Periodo [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#DDEFD5"><b>PeriodoAcadémico</b></td></tr><tr><td align="left">id (PK) · código<br align="left"/>fecha_inicio · fecha_fin · estado<br align="left"/></td></tr></table>>];
+  Grupo [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#DDEFD5"><b>Grupo</b></td></tr><tr><td align="left">id (PK) · asignatura_id (FK)<br align="left"/>periodo_id (FK) · docente_id (FK)<br align="left"/>cupo_maximo · horario<br align="left"/>aula_o_enlace<br align="left"/></td></tr></table>>];
+  Matricula [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#FDE9C9"><b>Matrícula</b></td></tr><tr><td align="left">id (PK) · estudiante_id (FK)<br align="left"/>grupo_id (FK) · asignatura_id<br align="left"/>periodo_id · fecha<br align="left"/>único (estudiante, asignatura, periodo)<br align="left"/></td></tr></table>>];
+  Calificacion [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#F6D9E6"><b>Calificación</b></td></tr><tr><td align="left">id (PK) · matricula_id (FK)<br align="left"/>nombre_corte · valor<br align="left"/>publicada<br align="left"/></td></tr></table>>];
+  Auditoria [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="3"><tr><td bgcolor="#E8E8E8"><b>Auditoría</b> (solo inserción)</td></tr><tr><td align="left">id (PK) · fecha · usuario_id<br align="left"/>acción · entidad · registro_id<br align="left"/>datos_json (sin llaves foráneas)<br align="left"/></td></tr></table>>];
+  Usuario -> Rol [taillabel="N", headlabel="M", label="UsuarioRol\n(tabla intermedia)"];
+  Usuario -> Estudiante [taillabel="1", headlabel="0..1", label="es"];
+  Usuario -> Docente [taillabel="1", headlabel="0..1", label="es"];
+  Programa -> Estudiante [taillabel="1", headlabel="0..N", label="cursa"];
+  Programa -> Asignatura [taillabel="1", headlabel="1..N", label="ofrece"];
+  Asignatura -> Grupo [taillabel="1", headlabel="0..N", label="se dicta en"];
+  Periodo -> Grupo [taillabel="1", headlabel="0..N", label="contiene"];
+  Docente -> Grupo [taillabel="1", headlabel="0..N", label="dirige"];
+  Grupo -> Matricula [taillabel="1", headlabel="0..N\n(≤ cupo_maximo)", label="recibe"];
+  Estudiante -> Matricula [taillabel="1", headlabel="0..N", label="solicita"];
+  Matricula -> Calificacion [taillabel="1", headlabel="0..N", label="genera"];
+  {rank=same; Calificacion; Auditoria}
+  {rank=same; Rol; Estudiante; Docente; Asignatura}
+}

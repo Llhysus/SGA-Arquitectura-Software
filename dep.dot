@@ -1,0 +1,32 @@
+digraph D {
+  rankdir=TB; fontname="DejaVu Sans"; nodesep=0.35; ranksep=0.65; compound=true; newrank=true;
+  node [fontname="DejaVu Sans", fontsize=11, shape=box, style="rounded,filled", fillcolor="#FFFFFF"];
+  edge [fontname="DejaVu Sans", fontsize=9.5, color="#444444"];
+  CLI [label="Navegador del usuario\n(computador o móvil)", fillcolor="#F2F2F2"];
+  subgraph cluster_pub { label="Subred pública"; labeljust=l; fontsize=10; style="rounded,filled"; fillcolor="#EEF4FB"; color="#6C8EBF";
+    LB [label="Balanceador de carga + WAF\nTLS 1.2/1.3 · HSTS · redirección 80→443 · controles de salud", fillcolor="#D6E4F5"];
+  }
+  subgraph cluster_app { label="Subred privada de aplicación (dos zonas de disponibilidad)"; labeljust=l; fontsize=10; style="rounded,filled"; fillcolor="#F1F8EC"; color="#82B366";
+    A1 [label="Nodo de aplicación A (zona 1)\ninterfaz web estática + monolito\nmodular, sin estado (tokens)", fillcolor="#DDEFD5"];
+    A2 [label="Nodo de aplicación B (zona 2)\ninterfaz web estática + monolito\nmodular, sin estado (tokens)", fillcolor="#DDEFD5"];
+  }
+  subgraph cluster_db { label="Subred privada de datos (sin IP pública; puerto 5432 solo desde los nodos de aplicación)"; labeljust=l; fontsize=10; style="rounded,filled"; fillcolor="#FFF7E8"; color="#D79B00";
+    PGB [label="Agrupador de conexiones (PgBouncer)", fillcolor="#FDE9C9"];
+    P [label="PostgreSQL primario\n(zona 1)", shape=cylinder, fillcolor="#FDE9C9"];
+    R [label="PostgreSQL réplica en espera\n(zona 2)", shape=cylinder, fillcolor="#FDE9C9"];
+    ORQ [label="Orquestador de conmutación\n(Patroni, con quórum)", fillcolor="#FDE9C9"];
+    {rank=same; P; R; ORQ}
+  }
+  subgraph cluster_srv { label="Servicios complementarios"; labeljust=l; fontsize=10; style="rounded,filled"; fillcolor="#F4F0FA"; color="#9673A6";
+    BK [label="Almacén de respaldos cifrado (AES-256)\nalmacenamiento inmutable (Object Lock)", shape=folder, fillcolor="#E4DDF3"];
+    MON [label="Monitoreo y alertas\n(métricas y logs de nodos y base de datos)", fillcolor="#E4DDF3"];
+    {rank=same; BK; MON}
+  }
+  CLI -> LB [label=" HTTPS (TLS)"];
+  LB -> A1 [label=" HTTP interno / TLS"]; LB -> A2;
+  A1 -> PGB [label=" TLS · usuario de BD con\n privilegios mínimos"]; A2 -> PGB;
+  PGB -> P;
+  P -> R [label="replicación\nsíncrona", dir=both, color="#B45F06", fontcolor="#B45F06"];
+  ORQ -> P [style=dashed, label="supervisa"];
+  P -> BK [label=" pg_basebackup diario + archivo continuo de WAL", color="#6A3D9A", fontcolor="#6A3D9A"];
+}

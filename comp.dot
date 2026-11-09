@@ -1,0 +1,32 @@
+digraph C {
+  rankdir=TB; fontname="DejaVu Sans"; nodesep=0.35; ranksep=0.7; compound=true; newrank=true;
+  node [fontname="DejaVu Sans", fontsize=11, shape=box, style="rounded,filled", fillcolor="#FFFFFF"];
+  edge [fontname="DejaVu Sans", fontsize=9.5, color="#444444"];
+  UI [label="Interfaz web (SPA responsiva)\nnavegadores recientes", fillcolor="#F2F2F2"];
+  API [label="Capa API REST\ncontroladores · validación de token y permisos · OpenAPI", fillcolor="#F2F2F2"];
+  subgraph cluster_m { label="Monolito modular: cada módulo con capas internas (API · Aplicación · Dominio · Infraestructura)"; labeljust=l; fontsize=10; style="rounded"; color="#888888";
+    SEG [label="Seguridad\nautenticación (RF-01)\nroles y permisos (RF-02)", fillcolor="#D6E4F5"];
+    ACA [label="Gestión Académica\nestudiantes, docentes, programas,\nasignaturas, periodos, grupos\n(RF-03 a RF-06)", fillcolor="#DDEFD5"];
+    MAT [label="Matrículas\nmatrícula, cupos y\nduplicados (RF-07)", fillcolor="#FDE9C9"];
+    CAL [label="Calificaciones\nregistro y consulta\n(RF-08, RF-09)", fillcolor="#F6D9E6"];
+    REP [label="Reportes y consultas\nreportes, búsqueda y\nfiltros (RF-10, RF-11)", fillcolor="#E4DDF3"];
+    BUS [label="Eventos internos\nhandler síncrono,\nmisma transacción", style="filled,dashed", fillcolor="#FFFBE0"];
+    AUD [label="Auditoría\nsolo inserción\n(RF-12)", fillcolor="#E8E8E8"];
+    {rank=same; SEG; ACA; MAT}
+    {rank=same; CAL; REP}
+    {rank=same; BUS; AUD}
+  }
+  DB [label="PostgreSQL (una base de datos, esquema por módulo;\ncada módulo accede solo a sus tablas)", shape=cylinder, fillcolor="#F2F2F2"];
+  UI -> API [label=" HTTPS / JSON"];
+  API -> SEG [label=" valida token\n y permisos"];
+  API -> ACA; API -> MAT;
+  SEG -> CAL [style=invis]; ACA -> REP [style=invis];
+  MAT -> ACA [label="IGrupos: obtener\ny bloquear grupo", color="#B45F06", fontcolor="#B45F06", constraint=false];
+  CAL -> MAT [label="IMatriculas", color="#B45F06", fontcolor="#B45F06"];
+  REP -> ACA [label="consultas de solo lectura", style=dotted];
+  REP -> MAT [style=dotted]; REP -> CAL [style=dotted];
+  SEG -> BUS [style=dashed, label="publican\neventos"]; ACA -> BUS [style=dashed]; MAT -> BUS [style=dashed]; CAL -> BUS [style=dashed];
+  BUS -> AUD [style=dashed];
+  AUD -> DB [style=invis, weight=5];
+  ACA -> DB [ltail=cluster_m, color="#777777"];
+}
